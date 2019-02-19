@@ -1,7 +1,7 @@
 // Helper functions
 
 // Change this to your invoicer instance!
-const base_invoicer_url = 'http://YOURINVOICER-INSTANCE/invoicer';
+const base_invoicer_url = 'http://applepi.local/invoicer';
 
 // Check BTC Rates
 // NO need to do anything, but the function will return a callback in format of:
@@ -52,11 +52,20 @@ var lninvoicerapp = new Vue({
         bip21invoice: '',
         bolt11: '',
         amount: 1,
-        invoicedescription: 'Default payment'
+        invoicedescription: 'Default payment',
+        title: 'Pay invoice',
+        text: '',
+        qrcode: new QRious({ size: 300 })
     },
     // Callbacks
     mounted: function() {
         console.log("Box invoicing App Mounted Successfully!");
+    },
+    computed: {
+        newQRCode() {
+            this.qrcode.value = this.text
+            return this.qrcode.toDataURL()            
+        }
     },
     methods: {
         createInvoice: function() {
@@ -88,6 +97,7 @@ var lninvoicerapp = new Vue({
                             var amt_in_btc_units = parseFloat(this.amount / 100000000);
                             if (response.data.address !== undefined && response.data.address !== null) {
                                 this.bip21invoice = "bitcoin:" + response.data.address.toString() + "?amount=" + amt_in_btc_units.toString() + "&lightning=" + this.bolt11.toString();
+                                this.text = this.bip21invoice;
                                 console.log(this.bip21invoice);
                             } else {
                                 console.log(this.bolt11);
