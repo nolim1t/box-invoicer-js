@@ -1,7 +1,7 @@
 // Helper functions
 
 // Change this to your invoicer instance!
-const base_invoicer_url = 'http://YOURBOXHERE/invoicer';
+const base_invoicer_url = 'http://YOURBOX/invoicer';
 
 // Check BTC Rates
 // NO need to do anything, but the function will return a callback in format of:
@@ -58,6 +58,10 @@ var lninvoicerapp = new Vue({
         title: 'Pay invoice',
         text: '',
         settled: false,
+        paymenterror: false,
+        paymentexpired: false,
+        contextdeadlineexceededtries: 0,
+        errorobject: {},
         qrcode: new QRious({ size: 300 })
     },
     // Callbacks
@@ -93,6 +97,9 @@ var lninvoicerapp = new Vue({
         createInvoice: function() {
             if (document.getElementById("createInvoice") !== undefined && document.getElementById("createInvoice") !== null) {
                 // If theres a button called "createInvoice"
+                if (document.getElementById("statusdisplay") !== undefined && document.getElementById("statusdisplay") !== null) {
+                    document.getElementById("statusdisplay").innerHTML = 'Generating invoice...';
+                }
                 var create_invoice_endpoint =  base_invoicer_url + "/payment";
                 var payment_obj = {
                     amount: this.amount,
@@ -111,6 +118,9 @@ var lninvoicerapp = new Vue({
                 document.getElementById("createInvoice").style.visibility = 'hidden';
                 axios(request_obj)
                 .then((response) => {
+                    if (document.getElementById("statusdisplay") !== undefined && document.getElementById("statusdisplay") !== null) {
+                        document.getElementById("statusdisplay").innerHTML = '';
+                    }                    
                     //document.getElementById("createInvoice").style.visibility = 'visible'; // Show generate button again
                     //document.getElementById("createInvoice").innerHTML = 'Generate another lightning ⚡️ or bitcoin invoice';
                     if (response.data !== undefined && response.data !== null) {
@@ -151,10 +161,14 @@ var lninvoicerapp = new Vue({
     checkpayment: function() {
         if  (this.hash !== '') {
             if (this.bitcoinaddress !== '') {
+                if (document.getElementById("statusdisplay") !== undefined && document.getElementById("statusdisplay") !== null) {
+                    document.getElementById("statusdisplay").innerHTML = 'Waiting for payment (3 mins)...';
+                }                
                 var check_payment_endpoint = base_invoicer_url + '/payment?hash=' + this.hash.toString() + '&address=' + this.bitcoinaddress.toString();
                 var request_obj = {
                     method: 'GET',
                     url: check_payment_endpoint,
+                    timeout: 180000,
                     headers: {
                         'Content-Type': 'application/json'
                     },
@@ -162,6 +176,9 @@ var lninvoicerapp = new Vue({
                 console.log("Checking payment");
                 axios(request_obj)
                 .then((response) => {
+                    if (document.getElementById("statusdisplay") !== undefined && document.getElementById("statusdisplay") !== null) {
+                        document.getElementById("statusdisplay").innerHTML = '';
+                    }                    
                     if (response.data.ln !== undefined && response.data.ln !== null) {
                         // Lightning Payment Detected!
                         console.log(JSON.stringify(response.data.ln));
@@ -170,10 +187,47 @@ var lninvoicerapp = new Vue({
                         // Bitcoin on chain detected!
                         console.log(JSON.stringify(response.data.bitcoin));
                         this.settled = true; // Set to true                        
+                    } else {
+                        console.log("Undefined response");
                     }
                 })
                 .catch((error) => {
-                    console.log(error);
+                    console.log("Error caught");
+                    this.paymenterror = true; // Set payment error = true
+                    if (document.getElementById("statusdisplay") !== undefined && document.getElementById("statusdisplay") !== null) {
+                        document.getElementById("statusdisplay").innerHTML = '';
+                    }                        
+                    if (error.response !== undefined && error.response !== null) {
+                        if (error.response.data !== undefined && error.response.data !== null) {
+                            // Data exists
+                            this.errorobject = error.response.data;
+                            if (error.response.data.error !== undefined && error.response.data.error !== null) {
+                                if (error.response.data.error.toString().indexOf("DeadlineExceeded") !== -1) {
+                                    // Unable to fetch invoice - DeadlineExceeded
+                                    if (this.contextdeadlineexceededtries <= 3) {                                    
+                                        console.log("Context deadline exceeded - lets retry this");
+                                        this.contextdeadlineexceededtries = this.contextdeadlineexceededtries + 1;
+                                        this.checkpayment(); // Retry request
+                                    }
+                                } else if (error.response.data.error.toString().indexOf("expired") !== -1) {
+                                    console.log("Payment expired");
+                                    this.paymentexpired = true;
+                                }
+                                console.log("Error: " + error.response.data.error.toString());
+                            } else {
+                                console.log("Error returned but no idea how to process it");
+                                console.log(JSON.stringify(error.response.data));
+                            }
+                        } else {
+                            console.log('Error but nothing returned');
+                        }
+                    } else {
+                        console.log('Error but no response');
+                        console.log(JSON.stringify(error));
+                        this.errorobject = error;
+                        // re-send the request
+                        this.checkpayment();
+                    }
                 })                
             } else {
                 console.log('Nothing to check');
