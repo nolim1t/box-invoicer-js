@@ -1,7 +1,7 @@
 // Helper functions
 
 // Change this to your invoicer instance!
-const base_invoicer_url = 'http://YOURBOX/invoicer';
+const base_invoicer_url = 'http://box.local/invoicer';
 
 // Check BTC Rates
 // NO need to do anything, but the function will return a callback in format of:
@@ -151,8 +151,12 @@ var lninvoicerapp = new Vue({
                     }
                 })
                 .catch((error) => {
+                    if (document.getElementById("statusdisplay") !== undefined && document.getElementById("statusdisplay") !== null) {
+                        document.getElementById("statusdisplay").innerHTML = 'Error generating invoice: ' + error.message + ' (<a href="#" onclick="lninvoicerapp.createInvoice(); ">Retry</a>)';
+                    }                                
                     document.getElementById("createInvoice").style.visibility = 'visible';
-                    alert(error)
+                    console.log(JSON.stringify(error));
+                    console.log(error.message);
                 })                
             } else {
                 console.log("createInvoice button does not exist!");
