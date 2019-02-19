@@ -14,14 +14,19 @@ This project is meant as a drop in add-on for calling ["the box"](https://lncm.i
 
 <!-- Sample code creates invoice for 1337 sats -->
 <!-- Note: Not ready as of yet -->
-<div id="#lninvoicerapp">
+<div id="lninvoicerapp">
     <div id="paymentwidget">
         <button id="createInvoice" onClick="lninvoicerapp.amount = 1337; lninvoicerapp.createInvoice();">Pay with ⚡️ lightning or bitcoin</button>
+        <div v-if="text" class="output">
+            <img :src="newQRCode" alt="QRCode">
+        </div>        
     </div>
 </div>
 
+
 <!-- Can put this before or after -->
 <!-- Edit the below to your path (or you can run off master)  -->
+<script src="https://gitlab.com/nolim1t/box-invoicer-js/raw/master/qrious.min.js"></script>
 <script src="https://gitlab.com/nolim1t/box-invoicer-js/raw/master/box-invoicer.js"></script>
 
 ```
