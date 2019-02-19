@@ -6,7 +6,7 @@
 // fetched: true
 // rates: {"CURRENCY_1": "INT_AMT_FOR_1_BTC", "CURRENCY_2": "INT_AMT_FOR_1_BTC"}
 // }
-const check_btc_rates = (callback) => {
+const check_bitcoin_rates_for_box = (callback) => {
     // Notes: This URL can be anything but it should return rates in the following format
     // {status: 200, rates: {"CURRENCY_1": "INT_AMT_FOR_1_BTC", "CURRENCY_2": "INT_AMT_FOR_1_BTC"}}
     axios.get('https://jenh8onnc8.execute-api.ap-southeast-1.amazonaws.com/awslightningmainnet1/generateinvoice?showRates=true').then((response) => {
