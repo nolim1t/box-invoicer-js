@@ -13,7 +13,6 @@ This project is meant as a drop in add-on for calling ["the box"](https://lncm.i
 <!-- Anywhere in body -->
 
 <!-- Sample code creates invoice for 1337 sats -->
-<!-- Note: Not ready as of yet -->
 <div id="lninvoicerapp">
     <div id="paymentwidget">
         <button id="createInvoice" onClick="lninvoicerapp.amount = 1337; lninvoicerapp.createInvoice();">Pay with ⚡️ lightning or bitcoin</button>
