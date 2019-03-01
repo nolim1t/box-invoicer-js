@@ -216,8 +216,29 @@ var lninvoicerapp = new Vue({
                                 } else if (error.response.data.error.toString().indexOf("expired") !== -1) {
                                     console.log("Payment expired");
                                     this.paymentexpired = true;
+                                } else if (error.response.data.error.toString().indexOf("not enough") !== -1) {
+                                    console.log("Not enough error triggered");
+                                    var bitcoin_obj = JSON.parse(JSON.stringify(error.response.data.bitcoin));
+                                    if  (error.response.data.bitcoin !== undefined && error.response.data.bitcoin !== null) {
+                                        // Handle some weirdness with LNCM invoicer (wtf)
+                                        if (error.response.data.bitcoin.amount !== undefined && error.response.data.bitcoin.amount !== null) {
+                                            // if amount exists
+                                            var amount_sent_in_sets = parseFloat(error.response.data.bitcoin.amount) * 100000000;
+                                            console.log("Amount sent in sats = " + amount_sent_in_sets.toString());
+                                            console.log("Amount that was invoiced = " + this.amount.toString());
+                                            if (amount_sent_in_sets.toString() === this.amount.toString()) {
+                                                console.log("Make as paid - 0 conf is fine");
+                                                this.settled = true; // Set to true 
+                                            } else {
+                                                console.log("Don't mark as paid")
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    // Generic Error
+                                    console.log("Error: " + error.response.data.error.toString());
                                 }
-                                console.log("Error: " + error.response.data.error.toString());
+
                             } else {
                                 console.log("Error returned but no idea how to process it");
                                 console.log(JSON.stringify(error.response.data));
